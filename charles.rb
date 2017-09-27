@@ -13,7 +13,7 @@ class Flatpak < Thor
     def rebuild(*args)
         say "Rebuilding flatpak"
         Dir.chdir("#{Dir.home}/flatpak/") {
-            run("./rebuild.sh")
+            run "./rebuild.sh"
         }
     end
 
@@ -21,7 +21,7 @@ class Flatpak < Thor
     def upload(*args)
         say "Upload flatpak"
         Dir.chdir("#{Dir.home}/flatpak/") {
-            run("./upload.sh")
+            run "./upload.sh"
         }
     end
 
@@ -29,26 +29,34 @@ class Flatpak < Thor
     def merge_develop(*args)
         say "Merging develop into kolabnow"
         Dir.chdir("#{Dir.home}/flatpak/tmp/kube") {
-            run("git checkout develop")
-            run("git pull")
-            run("git checkout kolabnow")
-            run("git merge develop -m 'Merged branch develop'")
-            run("git push")
+            run "git checkout develop"
+            run "git pull"
+            run "git checkout kolabnow"
+            run "git merge develop -m 'Merged branch develop'"
+            run "git push"
         }
     end
 
 end
 
+
+
 class Charles < Thor
 
-    desc "foo ...", "Do some foo"
-    def foo(*args)
+    desc "foo", "Do some foo"
+    def foo
         say "Do some foo"
         system("echo 'hi'")
     end
 
     desc "flatpak SUBCOMMAND ...", "Flatpak commands"
     subcommand "flatpak", Flatpak
+
+    desc "sshtunnel", "Open ssh tunnel."
+    def sshtunnel
+        say "Opening ssh tunnel"
+        system "autossh -f -N -M 6565 tunnel"
+    end
 
 end
 
