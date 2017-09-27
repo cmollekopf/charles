@@ -2,13 +2,18 @@
 
 require 'thor'
 
+def run(cmd)
+    #Exit if a command fails
+    system(cmd) or exit
+end
+
 class Flatpak < Thor
 
     desc "rebuild", "Rebuild flatpak"
     def rebuild(*args)
         say "Rebuilding flatpak"
         Dir.chdir("#{Dir.home}/flatpak/") {
-            system("./rebuild.sh")
+            run("./rebuild.sh")
         }
     end
 
@@ -16,7 +21,19 @@ class Flatpak < Thor
     def upload(*args)
         say "Upload flatpak"
         Dir.chdir("#{Dir.home}/flatpak/") {
-            system("./upload.sh")
+            run("./upload.sh")
+        }
+    end
+
+    desc "merge_develop", "Merge and push the kolabnow branch of the kube repository"
+    def merge_develop(*args)
+        say "Merging develop into kolabnow"
+        Dir.chdir("#{Dir.home}/flatpak/tmp/kube") {
+            run("git checkout develop")
+            run("git pull")
+            run("git checkout kolabnow")
+            run("git merge develop -m 'Merged branch develop'")
+            run("git push")
         }
     end
 

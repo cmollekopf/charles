@@ -3,8 +3,8 @@ This is entirely customized for my machine though.
 
 # Commands
 
-charles $CAPABILITY ...ARGS
-charles $CAPABILITYGROUP $CAPABILITY ...ARGS
+charles $SKILLS ...ARGS
+charles $SKILLGROUP $SKILLS ...ARGS
 
 # Get it into $PATH
 
@@ -32,3 +32,7 @@ charles import photos
 * run: exec something
 * deploy: push stuff on some server
 * backup: push stuff to a backup
+
+# TODO
+* Summarize executed skills with success/failure message when done
+* Time executed skills
