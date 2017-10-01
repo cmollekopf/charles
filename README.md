@@ -12,19 +12,24 @@ ln -s ~/charles/charles.rb ~/bin/scripts/charles
 
 # Examples
 
-charles build kube
-charles test kube
-charles integrate kolabnowkube-flatpak
-charles build kolabnowkube-flatpak
-charles run kolabnowkube-flatpak
-charles deploy kolabnowkube-flatpak
+charles kube build
+charles kube install
+charles kube test
+
 charles releasetarball libkolab
 charles setobsversion libkolab 1.4.13.2
 charles flatpak rebuild
 charles flatpak upload
 
-charles backup photos
-charles import photos
+charles photos backup
+charles photos import
+
+charles backup
+
+charles remind Foobar on *
+charles schedule Foobar on *
+charles todo
+charles note
 
 * build: execute some build
 * test: execute some tests
@@ -36,3 +41,4 @@ charles import photos
 # TODO
 * Summarize executed skills with success/failure message when done
 * Time executed skills
+* Make availability of skills dependend on availability of directories
