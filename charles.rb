@@ -24,9 +24,13 @@ class Dav < Thor
         subject = args[0]
         timeString = args[1..-1].join(' ')
         startDate = Chronic.parse(timeString)
+        if !startDate
+            say "Failed to parse date: " + timeString
+            say "Example date: 25/10 at 19:00"
+            return
+        end
         say "Scheduling a new event for "
         say "Subject: " + subject
-        say "Date: " + startDate.strftime('%m/%d/%Y %H:%M')
 
         cal = Icalendar::Calendar.new
         cal.event do |e|
@@ -35,23 +39,21 @@ class Dav < Thor
             e.summary = subject
         end
 
-        cal_string = cal.to_ical
-
         config = YAML::load_file('./config.yaml')
         caldavconfig = config['caldav']
 
         user = caldavconfig['user']
-        password=caldavconfig['password']
-        host=caldavconfig['host']
-        calendar=caldavconfig['calendar']
-        path='/calendars/' + user + '/' + calendar + '/newevent.ics'
+        password = caldavconfig['password']
+        host = caldavconfig['host']
+        calendar = caldavconfig['calendar']
+        path ='/calendars/' + user + '/' + calendar + '/newevent.ics'
 
         say path
         uri = URI.join(URI.escape(host + path))
         req = Net::HTTP::Put.new(uri)
         req.set_content_type('text/calendar', {'charset' => 'utf-8'})
         # req['If-None-Match'] = '*'
-        req.body = cal_string
+        req.body = cal.to_ical
 
         req.basic_auth(user, password)
 
