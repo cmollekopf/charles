@@ -166,6 +166,8 @@ class Smug < Thor
         token = apiToken
         rootNodeUri = get(token, '/api/v2/user/cmollekopf')['Response']['User']['Uris']['Node']['Uri']
         result = get(token, rootNodeUri + '!children')
+        albums = result["Response"]["Node"].map{|x| {:name => x["Name"], :uri=> x["Uri"], :url => x["WebUri"]}}
+        say albums.map{|x| x[:name] + ": " + x[:url]}.join "\n"
 
         binding.pry
     end
