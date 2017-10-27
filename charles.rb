@@ -8,6 +8,7 @@ require 'chronic'
 require 'oauth'
 require 'json'
 require 'pry'
+require 'open3'
 
 class Time
     def addHours(hours)
@@ -15,9 +16,20 @@ class Time
     end
 end
 
-def run(cmd)
-    #Exit if a command fails
-    system(cmd) or exit
+def run(cmd, &block)
+    exit_status = Open3.popen3(cmd) do |stdin, stdout, stderr, thread|
+        output =  stdout.read.chomp
+        if block_given?
+            block.call(output)
+        else
+            puts output
+        end
+        thread.value
+    end
+    if exit_status != 0
+        say "Nonzero exit code: ", exit_status
+        raise "Command failed"
+    end
 end
 
 class Dav < Thor
@@ -206,7 +218,39 @@ class Flatpak < Thor
 
 end
 
+class Git
+    def self.is_clean?()
+        run "git status" do |output|
+            return output.include?('working directory clean')
+        end
+    end
 
+    def self.update(branch)
+        run "git checkout #{branch}"
+        run "git pull"
+    end
+
+    def self.merge(source, target, message)
+        run "git checkout #{target}"
+        run "git merge #{source} -m '#{message}'"
+    end
+end
+
+class Release < Thor
+
+    desc "kdepim", ""
+    def git_kdepim(*args)
+        say "Merging develop into kolabnow"
+        Dir.chdir("#{Dir.home}/kdebuild/kdepim/source/kdepim") {
+            unless Git.is_clean?
+                say "Directory is not clean"
+                return
+            end
+            Git.update('develop')
+            Git.merge('develop', 'kolabnow', 'Merged branch develop')
+        }
+    end
+end
 
 class Charles < Thor
 
@@ -224,6 +268,9 @@ class Charles < Thor
 
     desc "smug SUBCOMMAND ...", "SmugMug commands"
     subcommand "smug", Smug
+
+    desc "release SUBCOMMAND ...", "Release commands"
+    subcommand "release", Release
 
     desc "sshtunnel", "Open ssh tunnel."
     def sshtunnel
