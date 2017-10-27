@@ -233,4 +233,9 @@ class Charles < Thor
 
 end
 
-Charles.start(ARGV)
+begin
+    Charles.start(ARGV)
+rescue => e
+    puts e.message
+    puts e.backtrace.inspect
+end
