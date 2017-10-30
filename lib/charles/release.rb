@@ -92,9 +92,8 @@ class Release < Thor
             cleanCheckout(branch)
             tag = tagNewRelease(name)
 
-            # Commandline.run "git push origin #{branch}:#{branch}"
-            # Commandline.run "git push origin #{tag}:#{tag}"
-            createReleaseTarball(tag)
+            Commandline.run "git push origin #{branch}:#{branch}"
+            Commandline.run "git push origin #{tag}:#{tag}"
         }
     end
 
