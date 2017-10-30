@@ -1,9 +1,10 @@
 require 'open3'
 
 module Commandline
-    def run(cmd, &block)
+    def self.run(cmd, &block)
+        output = ""
         exit_status = Open3.popen3(cmd) do |stdin, stdout, stderr, thread|
-            output =  stdout.read.chomp
+            output = stdout.read.chomp
             if block_given?
                 block.call(output)
             else
@@ -12,9 +13,10 @@ module Commandline
             thread.value
         end
         if exit_status != 0
-            say "Nonzero exit code: ", exit_status
+            puts "Nonzero exit code: ", exit_status, "Command: ", cmd
             raise "Command failed"
         end
+        return output
     end
 
 end
