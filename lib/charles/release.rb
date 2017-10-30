@@ -1,4 +1,7 @@
 require 'thor'
+require 'json'
+require 'crack'
+require 'awesome_print'
 require_relative 'commandline'
 
 class Git
@@ -131,6 +134,24 @@ class Release < Thor
             Commandline.run "osc add #{tarballs[1]}"
             Commandline.run "osc ci -m 'New release'"
         }
+    end
+
+    desc "obs_status", ""
+    def obs_status
+        Commandline.run "osc prjresults Kontact:4.13:Development -r Fedora_25,Fedora_26 --xml" do |s|
+            hash = Crack::XML.parse(s)
+            result = hash["resultlist"]["result"]
+                .select { |r| ["Fedora_25", "Fedora_26"].include? r["repository"] }
+                .map do |r|
+                {
+                    :project => r["project"],
+                    :repository => r["repository"],
+                    :state => r["state"],
+                    :status => r["status"].select { |s| not ["disabled", "succeeded", "excluded"].include? s["code"]  }
+                }
+            end
+            ap result, {:index => false}
+        end
     end
 end
 
