@@ -128,7 +128,7 @@ class Release < Thor
                 HEREDOC
             }
 
-            tarballs = Commandline.run("ls *.tar.gz").split("\n")
+            tarballs = Commandline.run("ls *orig.tar.gz").split("\n")
             Commandline.run "osc delete #{tarballs[0]}"
             Commandline.run "osc add #{tarballs[1]}"
             Commandline.run "osc ci -m 'New release'"
