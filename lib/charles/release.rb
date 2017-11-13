@@ -81,20 +81,20 @@ class Release < Thor
             Commandline.run "rm -R debian"
         end
 
+        def currentDirectoryName
+            Dir.pwd.split('/').last
+        end
+
     }
 
-    desc "git_kdepim", ""
-    def git_kdepim
-        say "Release"
-        Dir.chdir("#{Dir.home}/kdebuild/kdepim/source/kdepim") {
-            branch = "kolab/integration/4.13.0"
-            name = "kdepim"
-            cleanCheckout(branch)
-            tag = tagNewRelease(name)
+    desc "git", "Release a git repository from it's source dir."
+    def git(branch = "kolab/integration/4.13.0")
+        say "Releasing #{currentDirectoryName} #{branch}"
+        cleanCheckout(branch)
+        tag = tagNewRelease(currentDirectoryName)
 
-            Commandline.run "git push origin #{branch}:#{branch}"
-            Commandline.run "git push origin #{tag}:#{tag}"
-        }
+        Commandline.run "git push origin #{branch}:#{branch}"
+        Commandline.run "git push origin #{tag}:#{tag}"
     end
 
     desc "obs_kdepim", ""
