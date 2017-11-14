@@ -87,7 +87,7 @@ class Release < Thor
 
     }
 
-    desc "git", "Release a git repository from it's source dir."
+    desc "git", "Release a git repository from its source dir."
     def git(branch = "kolab/integration/4.13.0")
         say "Releasing #{currentDirectoryName} #{branch}"
         cleanCheckout(branch)
@@ -97,38 +97,50 @@ class Release < Thor
         Commandline.run "git push origin #{tag}:#{tag}"
     end
 
-    desc "obs_kdepim", ""
-    def obs_kdepim
-        name = "kdepim"
+    desc "obs", ""
+    def obs(name)
         newVersion = ""
+        patchVersion = 0
         Dir.chdir("#{Dir.home}/kdebuild/kdepim/source/#{name}") {
             latestTag = getLatestTag
             v = parseVersionNumber(latestTag)
             newVersion = "#{v[0]}.#{v[1]}.#{v[2]}.#{v[3]}"
+            patchVersion = v[3]
             tarball = createReleaseTarball(latestTag)
             Commandline.run "mv #{tarball} #{Dir.home}/devel/obs/Kontact:4.13:Development/#{name}/#{tarball.gsub("-", "_").gsub("tar.gz", "orig.tar.gz")}"
         }
         Dir.chdir("#{Dir.home}/devel/obs/Kontact:4.13:Development/#{name}") {
             Commandline.run "osc up"
             Commandline.run "osc revert ."
-            Fileutils.replaceInFile("kdepim.spec", /define patch_version (.*)$/) { |s| (s.to_i + 1).to_s }
+            Fileutils.replaceInFile("#{name}.spec", /define patch_version (.*)$/) { patchVersion.to_s }
             #TODO insert lines after %changelog
-            regexp = /really4\.13\.0\.(.*)-0~kolab1$/
-            Fileutils.replaceInFile("kdepim-Ubuntu_14.04.dsc", regexp) { |s| (s.to_i + 1).to_s }
-            Fileutils.replaceInFile("kdepim-Ubuntu_16.04.dsc", regexp) { |s| (s.to_i + 1).to_s }
+            Dir.glob("#{name}*.dsc").each do |file|
+                Fileutils.replaceInFile(file, /4\.13\.0\.(.*)$/) { patchVersion.to_s }
+            end
 
-            updateDebianTarball {
-                Fileutils.prependToFile("changelog", <<~HEREDOC)
-                    kdepim (4:#{newVersion}-0~kolab1) unstable; urgency=medium
+            if File.file? "debian.changelog"
+                Fileutils.prependToFile("debian.changelog", <<~HEREDOC)
+                    #{name} (4:#{newVersion}-0~kolab1) unstable; urgency=medium
 
-                      * New upstream release #{newVersion}
+                    * New upstream release #{newVersion}
 
-                     -- Christian Mollekopf (Kolab Systems) <mollekopf@kolabsystems.com>  #{DateTime.now.strftime('%a, %d %b %Y %k:%M:%S %z')}
+                    -- Christian Mollekopf (Kolab Systems) <mollekopf@kolabsystems.com>  #{DateTime.now.strftime('%a, %d %b %Y %k:%M:%S %z')}
 
                 HEREDOC
-            }
+            else
+                updateDebianTarball {
+                    Fileutils.prependToFile("changelog", <<~HEREDOC)
+                        #{name} (4:#{newVersion}-0~kolab1) unstable; urgency=medium
 
-            tarballs = Commandline.run("ls *orig.tar.gz").split("\n")
+                        * New upstream release #{newVersion}
+
+                        -- Christian Mollekopf (Kolab Systems) <mollekopf@kolabsystems.com>  #{DateTime.now.strftime('%a, %d %b %Y %k:%M:%S %z')}
+
+                    HEREDOC
+                }
+            end
+
+            tarballs = Dir.glob("*orig.tar.gz").sort
             Commandline.run "osc delete #{tarballs[0]}"
             Commandline.run "osc add #{tarballs[1]}"
             Commandline.run "osc ci -m 'New release'"
