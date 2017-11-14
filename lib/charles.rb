@@ -56,7 +56,7 @@ class Charles < Thor
     desc "sshtunnel", "Open ssh tunnel."
     def sshtunnel
         say "Opening ssh tunnel"
-        system "autossh -f -N -M 6565 tunnel"
+        Commandline.run "autossh -f -N -M 6565 tunnel"
     end
 
 end
