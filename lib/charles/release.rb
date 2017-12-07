@@ -150,13 +150,25 @@ class Release < Thor
     desc "obs_status", ""
     def obs_status
         projects = ["Kontact:4.13:Development", "Kontact:4.13"]
+        repos = ["Fedora_26"]
         projects.each do |project|
-            Commandline.run "osc prjresults #{project} -r Fedora_25,Fedora_26 --xml" do |s|
+            Commandline.run "osc prjresults #{project} -r #{repos.join(',')} --xml" do |s|
                 hash = Crack::XML.parse(s)
-                result = hash["resultlist"]["result"]
-                    .select { |r| ["Fedora_25", "Fedora_26"].include? r["repository"] }
-                    .map do |r|
-                    {
+                results = hash["resultlist"]["result"]
+                if repos.count > 1
+                    result = results
+                        .select { |r| repos.include? r["repository"] }
+                        .map do |r|
+                            {
+                                :project => r["project"],
+                                :repository => r["repository"],
+                                :state => r["state"],
+                                :status => r["status"].select { |s| not ["disabled", "succeeded", "excluded"].include? s["code"]  }
+                            }
+                        end
+                else
+                    r = results
+                    result = {
                         :project => r["project"],
                         :repository => r["repository"],
                         :state => r["state"],
