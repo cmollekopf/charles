@@ -1,6 +1,7 @@
 require 'thor'
 require 'json'
 require 'crack'
+require 'pry'
 require 'awesome_print'
 require_relative 'commandline'
 
@@ -180,11 +181,22 @@ class Release < Thor
         end
     end
 
-    desc "obs_merge", ""
-    def obs_merge
-        Commandline.run "osc sr Kontact:4.13:Development kdepim Kontact:4.13 -m 'Merge please'"
-        Commandline.run "osc request list -P Kontact:4.13"
-        Commandline.run "osc request accept 2155 -m 'Accepted'"
+    desc "obs_merge", "Merge a repository to stable"
+    def obs_merge(repository)
+        Commandline.run "osc request list -M Kontact:4.13" do |output|
+            unless output.include? "No results"
+                say "There already are pending requests, cleanup first"
+                exit
+            end
+        end
+        Commandline.run "osc sr Kontact:4.13:Development #{repository} Kontact:4.13 -m 'Merge please'"
+        Commandline.run "osc request list -M Kontact:4.13" do |output|
+            requestNumber = output.split(' ').first
+            Commandline.run "osc request show -ud #{requestNumber}"
+            if yes? "Accept?"
+                Commandline.run "osc request accept #{requestNumber} -m 'Accepted'"
+            end
+        end
     end
 
 
