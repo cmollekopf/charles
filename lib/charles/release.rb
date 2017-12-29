@@ -7,8 +7,8 @@ require_relative 'commandline'
 
 class Git
     def self.is_clean?
-        Commandline.run "git status" do |output|
-            return output.include? 'working directory clean'
+        Commandline.run "git diff" do |output|
+            return output.empty?
         end
     end
 
@@ -33,6 +33,7 @@ class Release < Thor
         def cleanCheckout(branch)
             unless Git.is_clean?
                 say "Directory is not clean"
+                Commandline.run "git diff"
                 if yes? "Stash?"
                     Commandline.run "git stash"
                 else
