@@ -179,9 +179,9 @@ class Release < Thor
     desc "obs_status", ""
     def obs_status
         projects = ["Kontact:4.13:Development", "Kontact:4.13"]
-        repos = ["Fedora_26"]
+        repos = ["Fedora_26", "Fedora_27"]
         projects.each do |project|
-            Commandline.run "osc prjresults #{project} -r #{repos.join(',')} --xml" do |s|
+            Commandline.run "osc prjresults #{project} -r #{repos.join(' -r ')} --xml" do |s|
                 hash = Crack::XML.parse(s)
                 results = hash["resultlist"]["result"]
                 if repos.count > 1
