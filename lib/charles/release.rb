@@ -21,6 +21,10 @@ class Git
         Commandline.run "git checkout #{target}"
         Commandline.run "git merge #{source} -m '#{message}'"
     end
+
+    def self.push(branch)
+        Commandline.run "git push origin #{branch}:#{branch}"
+    end
 end
 
 class Release < Thor
@@ -57,7 +61,30 @@ class Release < Thor
             Commandline.run "git log #{tag} -n 1 --pretty=format:'%H'"
         end
 
-        def tagNewRelease(name)
+        def increaseVersion(versionString)
+            list = versionString.gsub('"', '').split('.')
+            if list.size == 2
+                list << '0'
+            else
+                list[-1] = (list.last.to_i + 1).to_s
+            end
+            return list.join('.')
+        end
+
+        def increaseDevelopmentVersion(versionString)
+            list = versionString.split('.')
+            list.pop()
+            list[-1] = (list.last.to_i + 1).to_s
+            return list.join('.')
+        end
+
+        def bumpDevelopmentVersion(cmakeVersionRegex)
+            newVersionNumber=""
+            Fileutils.replaceInFile("CMakeLists.txt", cmakeVersionRegex) { |s| newVersionNumber = increaseDevelopmentVersion(s); newVersionNumber }
+            Commandline.run "git commit -a -m 'Going towards #{newVersionNumber}'"
+        end
+
+        def tagNewRelease(prefix, cmakeVersionRegex)
             latestTag = getLatestTag()
             latestTagCommit = commitFromTag(latestTag)
             latestCommit = Commandline.run "git log -n 1 --pretty=format:'%H'"
@@ -65,10 +92,10 @@ class Release < Thor
                 say "Release commit is available: " + latestTagCommit
                 return latestTag
             end
-            Fileutils.replaceInFile("CMakeLists.txt", /VERSION_KOLAB (.*)\)/) { |s| (s.to_i + 1).to_s }
-            latestVersionNumber = parseVersionNumber(latestTag)
-            versionNumber = "#{latestVersionNumber[0]}.#{latestVersionNumber[1]}.#{latestVersionNumber[2]}.#{latestVersionNumber[3] + 1}"
-            tag = "#{name}-#{versionNumber}"
+            Fileutils.replaceInFile("CMakeLists.txt", cmakeVersionRegex) { |s| increaseVersion(s) }
+            newVersionNumber = increaseVersion(parseVersionNumber(latestTag).join('.'))
+            tag = "#{prefix}#{newVersionNumber}"
+            say "Tagging #{tag}"
             Commandline.run "git commit -a -m 'Prepared release of #{tag}'"
             Commandline.run "git tag -u mollekopf@kolabsys.com -s #{tag} -m 'Release of #{tag}'"
             return tag
@@ -93,7 +120,7 @@ class Release < Thor
     def git(branch = "kolab/integration/4.13.0")
         say "Releasing #{currentDirectoryName} #{branch}"
         cleanCheckout(branch)
-        tag = tagNewRelease(currentDirectoryName)
+        tag = tagNewRelease("#{currentDirectoryName}-", /VERSION_KOLAB (.*)\)/)
 
         Commandline.run "git push origin #{branch}:#{branch}"
         Commandline.run "git push origin #{tag}:#{tag}"
@@ -200,7 +227,75 @@ class Release < Thor
         end
     end
 
+    desc "sink", "Minor release of sink"
+    def sink
+        Dir.chdir("#{Dir.home}/src/sink") {
+            branch = 'develop'
+            say "Releasing #{currentDirectoryName}:#{branch}"
+            cleanCheckout(branch)
+            tag = tagNewRelease("v", /project\(sink VERSION (.*)\)/)
 
+            Git.merge 'develop', 'master', 'Merging release #{tag}'
+
+            cleanCheckout('develop')
+            bumpDevelopmentVersion(/project\(sink VERSION (.*)\)/)
+
+            if yes? "Push?"
+                Git.push 'develop'
+                Git.push 'master'
+                Git.push tag
+            end
+        }
+    end
+
+    desc "kube", "Minor release of kube"
+    def kube
+        Dir.chdir("#{Dir.home}/src/kube") {
+            branch = 'develop'
+            say "Releasing #{currentDirectoryName}:#{branch}"
+            cleanCheckout(branch)
+            tag = tagNewRelease("v", /project\(kube VERSION (.*)\)/)
+
+            Git.merge 'develop', 'master', 'Merging release #{tag}'
+
+            cleanCheckout('develop')
+            bumpDevelopmentVersion(/project\(kube VERSION (.*)\)/)
+
+            if yes? "Push?"
+                Git.push 'develop'
+                Git.push 'master'
+                Git.push tag
+            end
+        }
+    end
+
+    desc "akonadi", "Minor release of akonadi"
+    def akonadi
+        Dir.chdir("#{Dir.home}/kdebuild/kdepim/source/akonadi") {
+            git('kolab/integration/1.12.0')
+        }
+    end
+
+    desc "kdepimlibs", "Minor release of kdepimlibs"
+    def kdepimlibs
+        Dir.chdir("#{Dir.home}/kdebuild/kdepim/source/kdepimlibs") {
+            git()
+        }
+    end
+
+    desc "kdepim-runtime", "Minor release of kdepim-runtime"
+    def kdepimlibs
+        Dir.chdir("#{Dir.home}/kdebuild/kdepim/source/kdepim-runtime") {
+            git()
+        }
+    end
+
+    desc "kdepim", "Minor release of kdepim"
+    def kdepimlibs
+        Dir.chdir("#{Dir.home}/kdebuild/kdepim/source/kdepim") {
+            git()
+        }
+    end
 
 end
 
