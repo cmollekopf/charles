@@ -122,8 +122,10 @@ class Release < Thor
         cleanCheckout(branch)
         tag = tagNewRelease("#{currentDirectoryName}-", /VERSION_KOLAB (.*)\)/)
 
-        Commandline.run "git push origin #{branch}:#{branch}"
-        Commandline.run "git push origin #{tag}:#{tag}"
+        if yes? "Push?"
+            Commandline.run "git push origin #{branch}:#{branch}"
+            Commandline.run "git push origin #{tag}:#{tag}"
+        end
     end
 
     desc "obs", ""
@@ -173,7 +175,9 @@ class Release < Thor
             tarballs = Dir.glob("*orig.tar.gz").sort
             Commandline.run "osc delete #{tarballs[0]}"
             Commandline.run "osc add #{tarballs[1]}"
-            Commandline.run "osc ci -m 'New release'"
+            if yes? "Commit?"
+                Commandline.run "osc ci -m 'New release'"
+            end
         }
     end
 
