@@ -136,7 +136,8 @@ class Release < Thor
             newVersion = "#{v[0]}.#{v[1]}.#{v[2]}.#{v[3]}"
             patchVersion = v[3]
             tarball = createReleaseTarball(latestTag)
-            Commandline.run "mv #{tarball} #{Dir.home}/devel/obs/Kontact:4.13:Development/#{name}/#{tarball.gsub("-", "_").gsub("tar.gz", "orig.tar.gz")}"
+            # We only replace the last - with an _
+            Commandline.run "mv #{tarball} #{Dir.home}/devel/obs/Kontact:4.13:Development/#{name}/#{tarball.reverse.sub("-", "_").reverse.gsub("tar.gz", "orig.tar.gz")}"
         }
         Dir.chdir("#{Dir.home}/devel/obs/Kontact:4.13:Development/#{name}") {
             Commandline.run "osc up"
@@ -283,15 +284,15 @@ class Release < Thor
         }
     end
 
-    desc "kdepim-runtime", "Minor release of kdepim-runtime"
-    def kdepimlibs
+    desc "kdepimruntime", "Minor release of kdepim-runtime"
+    def kdepimruntime
         Dir.chdir("#{Dir.home}/kdebuild/kdepim/source/kdepim-runtime") {
             git()
         }
     end
 
     desc "kdepim", "Minor release of kdepim"
-    def kdepimlibs
+    def kdepim
         Dir.chdir("#{Dir.home}/kdebuild/kdepim/source/kdepim") {
             git()
         }
