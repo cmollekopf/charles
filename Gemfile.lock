@@ -3,13 +3,16 @@ GEM
   specs:
     chronic (0.10.2)
     coderay (1.1.2)
+    crack (0.4.5)
+      rexml
     icalendar (2.4.1)
     json (2.1.0)
     method_source (0.9.0)
-    oauth (0.5.3)
+    oauth (0.5.5)
     pry (0.11.2)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
+    rexml (3.2.5)
     thor (0.20.0)
 
 PLATFORMS
@@ -17,6 +20,7 @@ PLATFORMS
 
 DEPENDENCIES
   chronic
+  crack
   icalendar
   json
   oauth
